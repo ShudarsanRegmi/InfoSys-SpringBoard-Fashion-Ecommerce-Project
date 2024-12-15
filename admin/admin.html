@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="container">
+    <div class="row admin-container mt-5">
+      
+      <div class="col-md-4 admin-sidebar p-4">
+        <h5 class="text-center mb-4">Admin Menu</h5>
+        <button class="btn btn-primary w-100 mb-3" onclick="redirectTo('profile.html')">Profile</button>
+        <button class="btn btn-secondary w-100 mb-3" onclick="redirectTo('change-password.html')">Change Password</button>
+        <button class="btn btn-primary w-100 mb-3" onclick="redirectTo('add-shop-items.html')">Add Shop Items</button>
+        <button class="btn btn-secondary w-100 mb-3" onclick="redirectTo('delivery-items.html')">Delivery Items</button>
+        <button class="btn btn-primary w-100" onclick="redirectTo('update-details.html')">Update Details</button>
+      </div>
+      
+      <div class="col-md-8 admin-content p-4">
+        
+          <h2 class="text-center mb-4">Welcome to Admin Dashboard</h2>
+          <p class="text-muted text-center">Manage your store efficiently using the tools provided.</p>
+          <img src="admin-image-placeholder.jpg" alt="Dashboard Image" class="img-fluid rounded" onerror="this.src='default-dashboard.png';">
+        
+      </div>
+    </div>
+  </div>
+  <script>
+    function redirectTo(page) {
+      window.location.href = page;
+    }
+  
+    document.querySelectorAll('.admin-sidebar button').forEach(button => {
+      button.addEventListener('click', function () {
+        document.querySelectorAll('.admin-sidebar button').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
