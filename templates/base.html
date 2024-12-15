@@ -4,14 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/home.css">
+    <link rel="stylesheet" href="/static/css/navbar.css">
+    <script defer src="/static/script/navbar.js"></script>
     {% block heads %}{% endblock %}
 </head>
 <body>
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Navbar</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script defer src="/static/scripts.js"></script>
+</head>
+<body>
+   <nav class="navbar">
+        <!-- Left Section: Logo and Categories -->
+        <div class="navbar-left">
+            <div class="navbar-logo">
+                MyLogo <span class="selected">Your address</span>
+            </div>
+            <div class="categories-dropdown">
+                <button onclick="toggleCategoriesDropdown(event)">Categories ▼</button>
+                <div class="categories-menu">
+                    <ul>
+                        <li><button>Category 1</button></li>
+                        <li><button>Category 2</button></li>
+                        <li><button>Category 3</button></li>
+                        <li><button>Category 4</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-    {% block content %}{% endblock %}
+        <!-- Center Section: Search -->
+        <div class="navbar-search">
+            <input type="text" placeholder="Search...">
+            <button>Search</button>
+        </div>
+
+        <!-- Right Section: Notifications and Profile -->
+        <div class="navbar-right">
+            <div class="notifications-dropdown">
+                <button class="icon-bell-button" onclick="toggleNotificationsDropdown(event)">🔔</button>
+                <div class="notifications-menu">
+                    <ul>
+                        <li><button>Notification 1</button></li>
+                        <li><button>Notification 2</button></li>
+                        <li><button>Notification 3</button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="profile-dropdown">
+                <button class="profile-photo-button" onclick="toggleProfileDropdown(event)">
+                    <img src="profile.jpg" alt="Profile" class="profile-photo">
+                </button>
+                <div class="dropdown">
+                    <ul>
+                        <li><button><span class="icon">🛒</span> My Cart</button></li>
+                        <li><button><span class="icon">❤️</span> My Wishlist</button></li>
+                        <li><button><span class="icon">📍</span> My Address</button></li>
+                        <li><button><span class="icon">📦</span> My Orders</button></li>
+                        <li><button><span class="icon">⚙️</span> Settings</button></li>
+                        <li><button><span class="icon">🚪</span> Logout</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+
+</body>
+</html>
+
+
+    {% block content %}
+
+    {% endblock %}
 
     <script>
-        {% block scripts %}{% endblock %}
+        {% block scripts %}
+
+        {% endblock %}
     </script>
     
 </body>
