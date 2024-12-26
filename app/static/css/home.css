@@ -1,0 +1,82 @@
+/* General Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+  /* Hero Section */
+  .hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+      url("https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcST7Bwozg4qDyHEd-8IgRvmyDZDwO_Bl78jTABMAmatYpoB_YyOIQXws8fK_s_Gsb8MSWaxakeASr9Fq52d_nhjmRqSCvOdiA9np5gSut6sgs8Y7arp2mTHvw")
+        center/cover;
+    height: 300px;
+    color: #fff;
+  }
+
+  /* Product Cards */
+  .product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .product-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .product-card img {
+    object-fit: cover;
+    height: 250px;
+  }
+
+/* Product Image Styling */
+.product-image {
+    -webkit-text-size-adjust: 100%;
+    font-size: 14px;
+    line-height: 20px;
+    font-family: "Amazon Ember", Arial, sans-serif;
+    border-collapse: collapse;
+    word-wrap: break-word;
+    list-style: none;
+    visibility: visible !important;
+    color: var(--__N4QdCheV6mGo, #0f1111);
+    box-sizing: border-box;
+    border: 0;
+    vertical-align: top;
+    height: 100% !important;
+    width: auto !important;
+    max-width: 446.521px;
+    max-height: 581px;
+}
+
+
+
+/* Ensure the body and HTML are full height */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+/* Set the wrapper to position relative and fill the available space */
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+/* Ensure the content grows to fill the available space */
+.content {
+    flex-grow: 1;
+}
+
+/* Footer style */
+.footer {
+    background-color: #f5f5f5;
+    padding: 10px 0;
+    text-align: center;
+    width: 100%;
+    position: bottom;
+    bottom: 0;
+    left: 0;
+    margin-top: auto;
+}
+

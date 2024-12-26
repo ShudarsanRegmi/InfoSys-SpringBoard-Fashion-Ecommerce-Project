@@ -51,3 +51,6 @@ document.querySelectorAll('.categories-menu, .notifications-menu, .dropdown').fo
         event.stopPropagation(); // Prevent click inside dropdown from closing it
     });
 });
+function redirectToCart() {
+    window.location.href = "{{ url_for('view_cart') }}";
+}

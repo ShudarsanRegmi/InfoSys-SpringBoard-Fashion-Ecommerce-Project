@@ -3,17 +3,20 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_login import UserMixin
 from datetime import datetime
+from flask_migrate import Migrate
+from flask_login import current_user
 
 app = Flask(__name__)
 
-# Configurations
+# Configurations for the app
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'Infosys-Springboard-5.0'
 
-# Initialize extensions
+# Initialize SQLAlchemy and Migrate
 db = SQLAlchemy(app)
-jwt = JWTManager(app)
+migrate = Migrate(app, db)
+
 
 with app.app_context():
     db.create_all()
@@ -127,6 +130,21 @@ def product_details(product_id):
     if product is None:
         return "Product not found", 404
     return render_template('product.html', product=product)
+@app.route('/cart')
+def view_cart():
+    # Get the current user's ID
+    user_id = current_user.id
+    
+    # Query the Cart model to get cart items for the current user
+    cart_items = Cart.query.filter_by(user_id=user_id).join(Product).all()
+    
+    # Calculate the total price
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    
+    # Render the cart template with the cart items and total price
+    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
