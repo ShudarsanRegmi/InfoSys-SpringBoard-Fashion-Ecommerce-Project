@@ -1,10 +1,8 @@
-from flask import Blueprint, render_template, get_flashed_messages, redirect, url_for
-from flask_login import login_required, current_user
-from .models import db
-from .forms import UpdateUserForm
+from flask import Blueprint, render_template
+from .models import Product
+from flask import send_from_directory
 
-bp = Blueprint('views', __name__)
-
+views = Blueprint('views', __name__)
 
 # Dummy Product Data (for rendering)
 products = [
@@ -12,7 +10,7 @@ products = [
         'id': 1,
         'name': 'Classic White Shirt',
         'price': 1999,
-        'image': 'static/Products/white.jpeg',
+        'image': 'static/products_images/white.jpeg',  # updated path
         'description': 'A timeless classic for any wardrobe, perfect for both formal and casual occasions.',
         'details': [
             'Made from 100% premium cotton.',
@@ -26,7 +24,7 @@ products = [
         'id': 2,
         'name': 'Denim Jacket',
         'price': 3499,
-        'image': 'static/Products/dDenim Jacket.jpeg',
+        'image': 'static/products_images/dDenim Jacket.jpeg',  # updated path
         'description': 'A stylish denim jacket that adds an edgy touch to your outfit.',
         'details': [
             'Durable and soft denim fabric.',
@@ -40,7 +38,7 @@ products = [
         'id': 3,
         'name': 'Summer Floral Dress',
         'price': 2799,
-        'image': 'static/Products/dSummer Floral Dress.jpeg',
+        'image': 'static/products_images/dSummer Floral Dress.jpeg',  # updated path
         'description': 'A breezy floral dress ideal for summer outings and vacations.',
         'details': [
             'Lightweight, flowy material for comfort.',
@@ -54,7 +52,7 @@ products = [
         'id': 4,
         'name': 'Leather Wallet',
         'price': 1299,
-        'image': 'static/Products/Leather Wallet.jpeg',
+        'image': 'static/products_images/Leather Wallet.jpeg',  # updated path
         'description': 'A sleek and functional leather wallet for everyday use.',
         'details': [
             'Crafted from genuine leather for durability.',
@@ -68,7 +66,7 @@ products = [
         'id': 5,
         'name': 'Running Shoes',
         'price': 3999,
-        'image': 'static/Products/shoes.jpeg',
+        'image': 'static/products_images/shoes.jpeg',  # updated path
         'description': 'High-performance running shoes for athletes and fitness enthusiasts.',
         'details': [
             'Breathable mesh upper for ventilation.',
@@ -80,34 +78,18 @@ products = [
     }
 ]
 
-@bp.route("/")
-@bp.route('/home')
-@login_required
+
+@views.route("/")
+@views.route('/home')
 def home():
-    print("going to render homepage...")
     return render_template('home.html', products=products)
 
-
-@bp.route('/product/<int:product_id>')
+@views.route('/product/<int:product_id>')
 def product_details(product_id):
     product = next((p for p in products if p['id'] == product_id), None)
     if product is None:
         return "Product not found", 404
     return render_template('product.html', product=product)
-
-
-@bp.route('/update', methods=['GET', 'POST'])
-@login_required
-def update():
-    get_flashed_messages()
-    form = UpdateUserForm(obj=current_user)  # Prepopulate form with current_user data
-    if form.validate_on_submit():
-        form.populate_obj(current_user)  # Update user object with form data
-        db.session.commit()
-        return redirect(url_for('views.home'))
-    return render_template('update_user.html', form=form)
-
-
-@bp.route('/auth_error')
-def auth_error():
-    return render_template('notAuthorized.html')
+@views.route('/media/<path:filename>')
+def media(filename):
+    return send_from_directory('app/media', filename)
