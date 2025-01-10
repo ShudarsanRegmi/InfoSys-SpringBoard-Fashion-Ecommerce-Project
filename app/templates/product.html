@@ -1,39 +1,59 @@
 {% extends "base.html" %}
 
 {% block title %}Product Details - {{ product['name'] }}{% endblock %}
-
+{% block heads %}
+<link rel=<link rel="stylesheet" href="/static/css/navbar.css">
+<link rel=<link rel="stylesheet" href="/static/css/product_details.css">
+{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <!-- Product Details Section -->
     <section class="py-5">
-        <div class="container">
-            <div class="row">
-                <!-- Product Image -->
-                <div class="col-md-6">
-                    <img src="{{ url_for('static', filename='Products_images/' + product['image'].split('/')[-1]) }}" alt="{{ product['name'] }}" class="product-image">
-                   <!-- <img src="{{ product['image'] }}" class="product-image img-fluid" alt="{{ product['name'] }}">-->
+      <div class="container">
+        <div class="row">
+          <!-- Product Image -->
+          <div class="col-md-6">
+            <img src="{{ url_for('static', filename='Products/' + product['image'].split('/')[-1]) }}" alt="{{ product['name'] }}" class="product-image">
 
-                </div>
-                <!-- Product Information -->
-                <div class="col-md-6">
-                    <h1 class="mb-3">{{ product['name'] }}</h1>
-                    <h3 class="text-primary mb-3">₹{{ product['price'] }}</h3>
-                    <p class="text-muted mb-4">{{ product['description'] }}</p>
-                    <button class="btn btn-success btn-lg">Add to Cart</button>
-                    <button class="btn btn-outline-secondary btn-lg ms-3">Add to Wishlist</button>
 
-                    <!-- Additional Details -->
-                    {% if product.get('details') %}
-                    <h4 class="mt-5">Why Choose This Product?</h4>
-                    <ul class="custom-list">
-                        {% for detail in product['details'] %}
-                        <li>{{ detail }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-                </div>
-            </div>
+          </div>
+          <!-- Product Information -->
+          <div class="col-md-6">
+            <h1 class="mb-3">{{ product['name'] }}</h1>
+            <h3 class="text-primary mb-3">₹{{ product['price'] }}</h3>
+            <p class="text-muted mb-4">{{ product['description'] }}</p>
+            <form action="{{ url_for('views.add_to_cart', product_id=product.id) }}" method="post" class="d-inline-block">
+              {% if product.stock > 0 %}
+                  <button type="submit" class="btn btn-success btn-lg">Add to Cart</button>
+              {% else %}
+                  <button type="button" class="btn btn-danger btn-lg" disabled>Out of Stock</button>
+              {% endif %}
+          </form>
+          <form action="{{ url_for('views.add_to_wishlist', product_id=product.id) }}" method="POST" class="d-inline-block ms-3">
+              {% if product.id in wishlist %}
+                  <button type="button" class="btn btn-warning btn-lg" disabled>Already in Wishlist</button>
+              {% else %}
+                  <button type="submit" class="btn btn-outline-secondary btn-lg">
+                      <i class="bi bi-heart"></i>
+                  </button>
+              {% endif %}
+          </form>
+          
+
+
+            <!-- Additional Details -->
+            <h4 class="mt-5">Why Choose This Product?</h4>
+            <ul class="a-unordered-list a-vertical a-spacing-mini">
+              {% for detail in product['details'] %}
+              <li class="a-spacing-mini">
+                <span class="a-list-item">{{ detail }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
-    </section>
-</div>
+      </div>
+</section>
+
 {% endblock %}
+
