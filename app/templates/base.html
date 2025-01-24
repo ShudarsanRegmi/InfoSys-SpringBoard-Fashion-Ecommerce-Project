@@ -16,10 +16,9 @@
      <div class="d-flex flex-column min-vh-100">
 
         <nav class="navbar">
-            <!-- Left Section: Logo and Categories -->
             <div class="navbar-left">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="#">
+                    <a class="navbar-brand" href="{{ url_for('views.home') }}">
                         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="50" height="50" class="d-inline-block align-center">
                         E-commerce
                     </a>
@@ -72,7 +71,8 @@
                     <div class="dropdown">
                         <ul>
                             <li><a href="{{ url_for('views.cart') }}"><button id="cart-button"><i class="bi bi-cart3"></i> My Cart <span id="cart-count"></span></button></a></li>
-                            <li><button><i class="bi bi-bag-heart"></i> My Wishlist</button></li>
+                            <li><a href="{{ url_for('views.view_wishlist') }}"><button><i class="bi bi-bag-heart"></i> My Wishlist</button></a></li>
+                            <li><button><i class="bi bi-house-door"></i> My Address</button></li>
                             <li><button><i class="bi bi-house-door"></i> My Address</button></li>
                             <li><button><i class="bi bi-box-seam"></i> My Orders</button></li>
                             <li><button><i class="bi bi-gear"></i> Settings</button></li>

@@ -1,0 +1,83 @@
+/* Heading */
+h1 {
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Card styling */
+.card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-img-top {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* Card body */
+.card-body {
+    text-align: center;
+    padding: 15px;
+}
+
+/* Card title */
+.card-title {
+    color: #444;
+    margin-bottom: 10px;
+}
+
+/* Card text */
+.card-text {
+    margin-bottom: 10px;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Buttons */
+.btn {
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Out of stock button */
+.btn-danger[disabled] {
+    background-color: #e0e0e0;
+    color: #777;
+}
+
+/* Responsive grid */
+@media (max-width: 768px) {
+    .col-md-3, .col-sm-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}

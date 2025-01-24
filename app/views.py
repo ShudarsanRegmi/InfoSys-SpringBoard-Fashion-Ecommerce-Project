@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, get_flashed_messages, redirect, url_for, Response, flash, request, session, jsonify
 from flask_login import login_required, current_user
-from .models import db
+from .models import db, Wishlist,Order,CartItem
 from .forms import UpdateUserForm
 from .decorators import is_delivery_person
 from .constants import STATES_CITY
@@ -278,7 +278,6 @@ products = [
         'stock': 5,
         'category': 'Electronics',
         'brand': 'OnePlus',
-        'colour': 'Boat',
         'colour': 'Black',
         'target_user':'Unisex',
         'type': 'Speaker'
@@ -298,7 +297,6 @@ products = [
         'stock': 3,
         'category': 'Accessories',
         'brand': 'Boat',
-        'colour': 'Boat',
         'colour': 'Brown',
         'target_user':['Unisex'],
         'type': 'Watch'
@@ -347,7 +345,7 @@ def update():
         except Exception as e:
             db.session.rollback()
             flash(f'An error occurred: {str(e)}', 'danger')
-    
+
     return render_template(
         'update_user.html',
         form=form,
@@ -412,7 +410,6 @@ def cart():
             product_copy = product.copy()
             product_copy["quantity"] = quantity
             cart_items.append(product_copy)
-
             # Calculate total price for this product
             total_price += product["price"] * quantity
             total_items += quantity  # Add quantity to total items
@@ -465,39 +462,39 @@ def remove_from_cart(product_id):
 def search():
     query = request.args.get('query', '').lower()  # Get the search query from the URL parameters
     query_words = query.split()  # Split the query into individual words
-    
+
     if query:
         results = []
-        
+
         # Loop through each product and check if it matches the individual words or combined query
         for p in products:
             try:
                 # Combine product attributes into one string for easier matching
                 product_str = (
-                    str(p.get('name', '')).lower() + ' ' + 
-                    str(p.get('description', '')).lower() + ' ' + 
-                    str(p.get('brand', '')).lower() + ' ' + 
-                    str(p.get('colour', '')).lower() + ' ' + 
-                    str(p.get('category', '')).lower() + ' ' + 
-                    str(p.get('target_user', '')).lower() + ' ' + 
+                    str(p.get('name', '')).lower() + ' ' +
+                    str(p.get('description', '')).lower() + ' ' +
+                    str(p.get('brand', '')).lower() + ' ' +
+                    str(p.get('colour', '')).lower() + ' ' +
+                    str(p.get('category', '')).lower() + ' ' +
+                    str(p.get('target_user', '')).lower() + ' ' +
                     str(p.get('type', '')).lower()
                 )
-                
+
                 # Check for exact matches for each word in the query
                 individual_match = all(word in product_str.split() for word in query_words)
-                
+
                 # Check if the entire query (combined) exists in the product attributes (combined search)
                 combined_match = query in product_str
-                
+
                 if individual_match or combined_match:
                     results.append(p)
             except Exception as e:
                 print(f"Error processing product: {p}. Error: {e}")
                 continue  # Skip any products that cause an error
-                
+
     else:
         results = []  # No results if query is empty
-    
+
     return render_template('search_results.html', query=query, results=results)
 
 
@@ -511,3 +508,159 @@ def category(category):
 @is_delivery_person
 def deliver():
     return Response("Delivered", status=200)
+
+
+@bp.route('/add_to_wishlist/<int:product_id>', methods=['POST'])
+@login_required
+def add_to_wishlist(product_id):
+    # Find the product (Assuming 'products' is a list or query of products)
+    product = next((p for p in products if p['id'] == product_id), None)
+
+    if not product:
+        # If product not found, flash an error message and redirect
+        flash('Product not found', 'danger')
+        return redirect(url_for('views.product_details', product_id=product_id))
+
+    # Check if product already exists in wishlist
+    existing_item = Wishlist.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if existing_item:
+        # If product already in wishlist, flash a message and redirect
+        flash('Product already in wishlist', 'info')
+        return redirect(url_for('views.product_details', product_id=product_id))
+
+    # Add the product to the wishlist
+    wishlist_item = Wishlist(user_id=current_user.id, product_id=product_id)
+    db.session.add(wishlist_item)
+    db.session.commit()
+
+    # Flash success message and redirect
+    flash('Product added to wishlist!', 'success')
+    return redirect(url_for('views.product_details', product_id=product_id))
+
+
+@bp.route('/wishlist')
+@login_required
+def view_wishlist():
+    wishlist_items = Wishlist.query.filter_by(user_id=current_user.id).all()
+    products_in_wishlist = []
+    for item in wishlist_items:
+        product = next((p for p in products if p['id'] == item.product_id), None)
+        if product:
+            products_in_wishlist.append(product)
+
+    return render_template('wishlist.html', products=products_in_wishlist)
+
+@bp.route('/wishlist')
+@login_required
+def remove_from_wishlist(product_id):
+    wishlist_item = Wishlist.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if wishlist_item:
+        db.session.delete(wishlist_item)
+        db.session.commit()
+        flash("Item removed from wishlist!", "success")
+    else:
+        flash("Item not found in wishlist.", "error")
+
+    return redirect(url_for('views.view_wishlist'))
+@bp.route('/checkout', methods=['GET', 'POST'])
+@login_required
+def checkout():
+    cart = session.get('cart', {})
+    if not cart:
+        flash('Your cart is empty!', 'danger')
+        return redirect(url_for('views.cart'))
+
+    # Fetch products and calculate costs
+    cart_items = []
+    subtotal = 0
+    for product_id, quantity in cart.items():
+        product_id = int(product_id)
+        # Get the product from the dummy list
+        product = next((p for p in products if p["id"] == product_id), None)
+        if product:
+            cart_items.append({
+                'id': product_id,
+                'name': product['name'],
+                'price': product['price'],
+                'quantity': quantity
+            })
+            subtotal += product['price'] * quantity
+
+    shipping = 50
+    tax = subtotal * 0.18
+    total = subtotal + shipping + tax
+
+    # Pass data to the template
+    return render_template(
+        'checkout.html',
+        cart_items=cart_items,
+        subtotal=round(subtotal, 2),
+        shipping=round(shipping, 2),
+        tax=round(tax, 2),
+        total=round(total, 2)
+    )
+
+
+# Order placement (saving order)
+@bp.route('/place_order', methods=['POST'])
+@login_required
+def place_order():
+    cart = session.get('cart', {})
+    if not cart:
+        flash('Your cart is empty!', 'danger')
+        return redirect(url_for('views.cart'))
+
+    for product_id, quantity in cart.items():
+        product_id = int(product_id)
+        # Get the product from the dummy list
+        product = next((p for p in products if p["id"] == product_id), None)
+        if product:
+            # Add order (dummy order since no database)
+            order = Order(
+                user_id=current_user.id,
+                product_id=product_id,
+                product_name=product['name'],
+                category=product['category'],
+                customer_name=f"{current_user.firstname} {current_user.lastname}",
+                place=current_user.place,
+                city=current_user.city,
+                district=current_user.district,
+                state=current_user.state,
+                pincode=current_user.pincode,
+                price=product['price'] * quantity
+            )
+            db.session.add(order)
+
+    # Clear the cart and save orders
+    session['cart'] = {}
+    db.session.commit()
+    flash('Your order has been placed successfully!', 'success')
+
+    return redirect(url_for('views.my_orders'))
+
+
+@bp.route('/update_address', methods=['POST'])
+@login_required
+def update_address():
+    customer_name = f"{current_user.firstname} {current_user.lastname}",
+    place = request.form.get('place')
+    city = request.form.get('city')
+    district = request.form.get('district')
+    state = request.form.get('state')
+    pincode = request.form.get('pincode')
+
+    if all([customer_name, place, city, state, pincode]):
+        current_user.customer_name = customer_name
+        current_user.city = city
+        current_user.district = district
+        current_user.state = state
+        current_user.pincode = pincode
+        db.session.commit()
+        flash('Address updated successfully!', 'success')
+    else:
+        flash('All fields are required to update the address.', 'danger')
+
+    return redirect(url_for('views.checkout'))
+
+

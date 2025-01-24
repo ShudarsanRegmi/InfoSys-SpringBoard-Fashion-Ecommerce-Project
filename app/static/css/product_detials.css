@@ -1,0 +1,98 @@
+/* Overall Page Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container Styling */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Product Image Styling */
+.product-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+/* Hover Effect for Images */
+.product-image-container:hover img {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* Buttons Styling */
+.buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.add-to-cart-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #218838;
+}
+
+.add-to-wishlist-btn {
+    background-color: transparent;
+    border: 1px solid #007bff;
+    color: #007bff;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.add-to-wishlist-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Disabled Button Styling */
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Product Details */
+.product-details-container h4 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 15px;
+}
+
+.product-details ul li {
+    list-style-type: disc;
+    color: #555;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+    .product-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .buttons-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .add-to-cart-btn,
+    .add-to-wishlist-btn {
+        width: 100%;
+    }
+}

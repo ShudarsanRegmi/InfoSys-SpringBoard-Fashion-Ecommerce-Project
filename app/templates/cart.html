@@ -39,7 +39,9 @@
         <h3>Total Price: ₹<span id="total-price">{{ total_price }}</span></h3>
         <p>Total Items: <span id="total-items">{{ total_items }}</span></p>  <!-- Display the total number of items in the cart -->
         <a href="{{ url_for('views.home') }}" class="btn btn-secondary">Continue Shopping</a>
-        <button class="btn btn-success">Proceed to Checkout</button>
+        <form action="{{ url_for('views.checkout') }}" method="POST">
+            <button type="submit" class="btn btn-success">Proceed to Checkout</button>
+        </form>
     </div>
 </div>
 

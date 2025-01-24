@@ -1,0 +1,34 @@
+/* Product Cards */
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .product-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .product-card img {
+    object-fit: cover;
+    height: 250px;
+  }
+
+  /* Product Image Styling */
+  .product-image {
+    -webkit-text-size-adjust: 100%;
+    font-size: 14px;
+    line-height: 20px;
+    font-family: "Amazon Ember", Arial, sans-serif;
+    border-collapse: collapse;
+    word-wrap: break-word;
+    list-style: none;
+    visibility: visible !important;
+    color: var(--__N4QdCheV6mGo, #0f1111);
+    box-sizing: border-box;
+    border: 0;
+    vertical-align: top;
+    height: 100% !important;
+    width: auto !important;
+    max-width: 446.521px;
+    max-height: 581px;
+  }

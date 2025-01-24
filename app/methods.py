@@ -3,8 +3,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-with open('app/secret.txt') as fh:
-    p = fh.read()
 
 ema = "songs.trendify@gmail.com"
 
