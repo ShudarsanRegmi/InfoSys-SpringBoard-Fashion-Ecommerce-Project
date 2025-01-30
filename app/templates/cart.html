@@ -24,27 +24,25 @@
                 </div>
                 <div class="text-end">
                     <p>Total: ₹<span id="item-total-{{ item.id }}" class="item-total">{{ item.price * item.quantity }}</span></p>
-                    <form action="{{ url_for('views.remove_from_cart', product_id=item.id) }}" method="POST" >
-                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                        </form>
+                    <form action="{{ url_for('views.remove_from_cart', product_id=item.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                    </form>
                 </div>
             </li>
             {% endfor %}
         </ul>
 
-
         <!-- Cart Summary -->
-<div class="card mt-4">
-    <div class="card-body text-end">
-        <h3>Total Price: ₹<span id="total-price">{{ total_price }}</span></h3>
-        <p>Total Items: <span id="total-items">{{ total_items }}</span></p>  <!-- Display the total number of items in the cart -->
-        <a href="{{ url_for('views.home') }}" class="btn btn-secondary">Continue Shopping</a>
-        <form action="{{ url_for('views.checkout') }}" method="POST">
-            <button type="submit" class="btn btn-success">Proceed to Checkout</button>
-        </form>
-    </div>
-</div>
-
+        <div class="card mt-4">
+            <div class="card-body text-end">
+                <h3>Total Price: ₹<span id="total-price">{{ total_price }}</span></h3>
+                <p>Total Items: <span id="total-items">{{ total_items }}</span></p>
+                <a href="{{ url_for('views.home') }}" class="btn btn-secondary">Continue Shopping</a>
+                <form action="{{ url_for('views.checkout') }}" method="POST">
+                    <button type="submit" class="btn btn-success">Proceed to Checkout</button>
+                </form>
+            </div>
+        </div>
     {% else %}
         <div class="alert alert-info text-center">Your cart is empty!</div>
     {% endif %}
@@ -54,14 +52,17 @@
     function updateCartQuantity(productId) {
         const quantityInput = document.getElementById(`quantity_${productId}`);
         const newQuantity = parseInt(quantityInput.value);
-
+    
         // Ensure valid input
-        if (newQuantity < 1) {
-            alert("Quantity must be at least 1.");
-            quantityInput.value = 0; // Reset to minimum
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            alert("Quantity must be a valid number and at least 1.");
+            quantityInput.value = 1; // Reset to minimum
             return;
         }
-
+    
+        // Disable input temporarily to prevent duplicate requests
+        quantityInput.disabled = true;
+    
         // Send AJAX request to update the quantity
         fetch(`/update_quantity/${productId}`, {
             method: 'POST',
@@ -77,21 +78,25 @@
                 const itemPrice = parseInt(document.querySelector(`#item-price-${productId}`).innerText);
                 const itemTotalElement = document.querySelector(`#item-total-${productId}`);
                 const updatedItemTotal = itemPrice * newQuantity;
-
+    
                 itemTotalElement.innerText = updatedItemTotal;
-
+    
                 // Recalculate and update the overall total price and total items
                 document.getElementById('total-price').innerText = data.total_price;
                 document.getElementById('total-items').innerText = data.total_items;
             } else {
-                alert(data.message);
+                alert(data.message || "Failed to update the quantity.");
             }
         })
         .catch(error => {
             console.error('Error updating cart:', error);
+            alert("An error occurred while updating the cart. Please try again.");
+        })
+        .finally(() => {
+            // Re-enable the input
+            quantityInput.disabled = false;
         });
     }
+    
 </script>
-
-
 {% endblock %}

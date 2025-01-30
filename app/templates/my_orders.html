@@ -1,1 +1,111 @@
+{% extends "base.html" %}
 
+{% block title %}Your Orders{% endblock %}
+
+{% block content %}
+{% block heads %}
+<link rel="stylesheet" href="/static/css/my_orders.css">
+{% endblock %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Your Orders</h1>
+
+    {% if orders_data %}
+        <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current" type="button" role="tab">Current</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="delivered-tab" data-bs-toggle="tab" data-bs-target="#delivered" type="button" role="tab">Delivered</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button" role="tab">Cancelled</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="orderTabsContent">
+            <div class="tab-pane fade show active" id="current" role="tabpanel">
+                {% set has_current = false %}
+                {% for order in orders_data if order.order.status == "Pending" %}
+                    {% set has_current = true %}
+                    <div class="card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{{ order.product.image }}" class="img-fluid rounded-start" alt="{{ order.product.name }}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ order.product.name }}</h5>
+                                    <p class="card-text"><strong>Quantity:</strong> {{ order.total_quantity }}</p>
+                                    <p class="card-text"><strong>Price per unit:</strong> ₹{{ order.product.price }}</p>
+                                    <p class="card-text"><strong>Total Price:</strong> ₹{{ order.total_price }}</p>
+                                    <p class="card-text"><strong>Status:</strong> {{ order.order.status }}</p>
+                                    <form action="{{ url_for('views.cancel_order', order_id=order.order.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger">Cancel Order</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                {% if not has_current %}
+                    <p class="text-center text-muted">No current orders.</p>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="delivered" role="tabpanel">
+                {% set has_delivered = false %}
+                {% for order in orders_data if order.order.status == "Delivered" %}
+                    {% set has_delivered = true %}
+                    <div class="card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{{ order.product.image }}" class="img-fluid rounded-start" alt="{{ order.product.name }}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ order.product.name }}</h5>
+                                    <p class="card-text"><strong>Quantity:</strong> {{ order.total_quantity }}</p>
+                                    <p class="card-text"><strong>Price per unit:</strong> ₹{{ order.product.price }}</p>
+                                    <p class="card-text"><strong>Total Price:</strong> ₹{{ order.total_price }}</p>
+                                    <p class="card-text"><strong>Status:</strong> {{ order.order.status }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                {% if not has_delivered %}
+                    <p class="text-center text-muted">No delivered orders.</p>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="cancelled" role="tabpanel">
+                {% set has_cancelled = false %}
+                {% for order in orders_data if order.order.status == "Cancelled" %}
+                    {% set has_cancelled = true %}
+                    <div class="card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{{ order.product.image }}" class="img-fluid rounded-start" alt="{{ order.product.name }}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ order.product.name }}</h5>
+                                    <p class="card-text"><strong>Quantity:</strong> {{ order.total_quantity }}</p>
+                                    <p class="card-text"><strong>Price per unit:</strong> ₹{{ order.product.price }}</p>
+                                    <p class="card-text"><strong>Total Price:</strong> ₹{{ order.total_price }}</p>
+                                    <p class="card-text"><strong>Status:</strong> {{ order.order.status }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                {% if not has_cancelled %}
+                    <p class="text-center text-muted">No cancelled orders.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">You have no orders yet.</div>
+    {% endif %}
+</div>
+{% endblock %}

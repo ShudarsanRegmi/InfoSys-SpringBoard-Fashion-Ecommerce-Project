@@ -1,11 +1,14 @@
 from flask import Blueprint, render_template, get_flashed_messages, redirect, url_for, Response, flash, request, session, jsonify
 from flask_login import login_required, current_user
-from .models import db, Wishlist,Order,CartItem
+from .models import db, Wishlist,Order,CartItem,OrderItem
 from .forms import UpdateUserForm
 from .decorators import is_delivery_person
 from .constants import STATES_CITY
-bp = Blueprint('views', __name__)
+from datetime import datetime,timezone
 import logging
+
+bp = Blueprint('views', __name__)
+
 
 
 # Dummy Product Data (for rendering)
@@ -23,7 +26,7 @@ products = [
             'Machine washable and easy to maintain.',
             'Perfect for office, events, and everyday use.'
         ],
-        'stock': 2,
+        'stock': 1000,
         'category': 'Clothing',
         'brand':'Wrogn',
         'colour': 'White',
@@ -316,7 +319,10 @@ def product_details(product_id):
     product = next((p for p in products if p['id'] == product_id), None)
     if product is None:
         return "Product not found", 404
-    return render_template('product.html', product=product)
+    # Fetch similar products based on category and type
+    similar_products = [p for p in products if (p['category'] == product['category'] or p['type'] == product['type']) and p['id'] != product_id]
+
+    return render_template('product.html', product=product, similar_products=similar_products)
 
 
 @bp.route('/update', methods=['GET', 'POST'])
@@ -356,105 +362,6 @@ def update():
 @bp.route('/auth_error')
 def auth_error():
     return render_template('notAuthorized.html')
-
-@bp.route('/add_to_cart/<product_id>', methods=['POST'])
-def add_to_cart(product_id):
-    # Ensure product_id is an integer
-    try:
-        product_id = int(product_id)
-    except ValueError:
-        return "Invalid product ID", 400
-
-    # Initialize cart in session if not already present
-    if 'cart' not in session:
-        session['cart'] = {}
-
-    # Initialize cart to hold products as integers
-    cart = {int(k): v for k, v in session['cart'].items()}
-
-    # Get the product from the products list
-    product = next((p for p in products if p['id'] == product_id), None)
-
-    if product:
-        # If product is already in the cart, increment the quantity, but not exceeding stock
-        if product_id in cart:
-            if cart[product_id] < product['stock']:
-                cart[product_id] += 1  # Increment quantity by 1
-            else:
-                # If the cart quantity reaches stock, don't increase it further
-                cart[product_id] = product['stock']
-        else:
-            # Add the product to the cart with a quantity of 1 if it's not already in the cart
-            cart[product_id] = 1
-
-    # Save the updated cart back to the session
-    session['cart'] = cart
-
-    # Redirect to the product details page or referrer
-    return redirect(request.referrer)
-
-
-@bp.route("/cart")
-def cart():
-    cart = session.get("cart", {})
-    cart_items = []
-    total_price = 0  # Initialize total price
-    total_items = 0  # Initialize total items count
-
-    # Loop through the cart to get each product and calculate totals
-    for product_id, quantity in cart.items():
-        product_id = int(product_id)
-
-        product = next((p for p in products if p["id"] == product_id), None)
-        if product:
-            product_copy = product.copy()
-            product_copy["quantity"] = quantity
-            cart_items.append(product_copy)
-            # Calculate total price for this product
-            total_price += product["price"] * quantity
-            total_items += quantity  # Add quantity to total items
-
-    # Pass total price and total items to the template
-    return render_template("cart.html", cart_items=cart_items, total_price=total_price, total_items=total_items)
-
-@bp.route("/update_quantity/<int:product_id>", methods=["POST"])
-def update_quantity(product_id):
-    cart = session.get("cart", {})
-    try:
-        # Parse new quantity from request data
-        new_quantity = int(request.json.get('quantity', 1))
-    except (ValueError, TypeError):
-        return jsonify({'success': False, 'message': 'Invalid quantity'}), 400
-
-    product = next((p for p in products if p['id'] == product_id), None)
-
-    if not product:
-        return jsonify({'success': False, 'message': 'Product not found'}), 404
-
-    if new_quantity > product['stock']:
-        new_quantity = product['stock']  # Cap quantity to available stock
-
-    if new_quantity < 1:
-        cart.pop(str(product_id), None)  # Remove product if quantity is 0 or less
-    else:
-        cart[str(product_id)] = new_quantity
-
-    session['cart'] = cart
-
-    # Calculate new total price and total items
-    total_price = sum(product["price"] * quantity for product_id, quantity in cart.items() if (product := next((p for p in products if p["id"] == int(product_id)), None)))
-    total_items = sum(cart.values())  # Total items is the sum of all quantities
-
-    return jsonify({'success': True, 'new_quantity': new_quantity, 'total_price': total_price, 'total_items': total_items})
-
-@bp.route('/remove-from-cart/<int:product_id>', methods=['POST'])
-def remove_from_cart(product_id):
-    cart = session.get('cart', {})
-    if str(product_id) in cart:
-        del cart[str(product_id)]
-        session['cart'] = cart
-        flash("Item removed from cart!", "success")
-    return redirect(url_for('views.cart'))
 
 
 
@@ -513,7 +420,7 @@ def deliver():
 @bp.route('/add_to_wishlist/<int:product_id>', methods=['POST'])
 @login_required
 def add_to_wishlist(product_id):
-    # Find the product (Assuming 'products' is a list or query of products)
+    # Find the product 
     product = next((p for p in products if p['id'] == product_id), None)
 
     if not product:
@@ -563,32 +470,143 @@ def remove_from_wishlist(product_id):
         flash("Item not found in wishlist.", "error")
 
     return redirect(url_for('views.view_wishlist'))
+
+
+@bp.route('/add_to_cart/<int:product_id>', methods=['POST'])
+def add_to_cart(product_id):
+    if not current_user.is_authenticated:
+        flash("Please log in to add items to the cart.", "warning")
+        return redirect(url_for('auth.login'))
+
+    # Get the product details
+    product = next((p for p in products if p['id'] == product_id), None)
+    if not product:
+        return "Product not found", 404
+
+    # Check if the item already exists in the user's cart
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if cart_item:
+        # If the product is already in the cart, update the quantity
+        if cart_item.quantity < product['stock']:
+            cart_item.quantity += 1
+        else:
+            flash("Stock limit reached!", "warning")
+    else:
+        # Add new product to the cart
+        cart_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
+        db.session.add(cart_item)
+
+    db.session.commit()
+    flash("Product added to cart!", "success")
+    return redirect(request.referrer)
+
+@bp.route('/cart')
+def cart():
+    if not current_user.is_authenticated:
+        flash("Please log in to view your cart.", "warning")
+        return redirect(url_for('auth.login'))
+
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    items_in_cart = []
+    total_price = 0
+    total_items = 0
+
+    for item in cart_items:
+        # Match with the dummy products
+        product = next((p for p in products if p['id'] == item.product_id), None)
+        if product:
+            product_copy = product.copy()
+            product_copy['quantity'] = item.quantity
+            items_in_cart.append(product_copy)
+            total_price += product['price'] * item.quantity
+            total_items += item.quantity
+
+    return render_template(
+        'cart.html',
+        cart_items=items_in_cart,
+        total_price=total_price,
+        total_items=total_items
+    )
+
+
+@bp.route("/update_quantity/<int:product_id>", methods=["POST"])
+def update_quantity(product_id):
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'message': 'Please log in to update your cart.'}), 403
+
+    # Get the cart item for the user and product
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if not cart_item:
+        return jsonify({'success': False, 'message': 'Item not found in cart'}), 404
+
+    try:
+        new_quantity = int(request.json.get('quantity', 1))
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'Invalid quantity'}), 400
+
+    # Check if the new quantity exceeds stock
+    product = next((p for p in products if p['id'] == product_id), None)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    if new_quantity > product['stock']:
+        return jsonify({'success': False, 'message': f'Stock limit reached. Maximum available: {product["stock"]}'}), 400
+
+    # Update or delete the cart item
+    if new_quantity < 1:
+        db.session.delete(cart_item)
+    else:
+        cart_item.quantity = new_quantity
+
+    db.session.commit()
+
+    # Calculate total price and total items
+    total_price = sum(item.quantity * next((p for p in products if p['id'] == item.product_id), {}).get('price', 0)
+                      for item in CartItem.query.filter_by(user_id=current_user.id).all())
+    total_items = sum(item.quantity for item in CartItem.query.filter_by(user_id=current_user.id).all())
+
+    return jsonify({'success': True, 'new_quantity': cart_item.quantity, 'total_price': total_price, 'total_items': total_items})
+
+@bp.route('/remove-from-cart/<int:product_id>', methods=['POST'])
+def remove_from_cart(product_id):
+    if not current_user.is_authenticated:
+        flash("Please log in to modify your cart.", "warning")
+        return redirect(url_for('auth.login'))
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if cart_item:
+        db.session.delete(cart_item)
+        db.session.commit()
+        flash("Item removed from cart!", "success")
+    return redirect(url_for('views.cart'))
+
+
+
 @bp.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
-    cart = session.get('cart', {})
-    if not cart:
+    cart_items_db = CartItem.query.filter_by(user_id=current_user.id).all()
+    if not cart_items_db:
         flash('Your cart is empty!', 'danger')
         return redirect(url_for('views.cart'))
 
-    # Fetch products and calculate costs
+    # Fetch products and calculate costs from cart
     cart_items = []
     subtotal = 0
-    for product_id, quantity in cart.items():
-        product_id = int(product_id)
-        # Get the product from the dummy list
-        product = next((p for p in products if p["id"] == product_id), None)
+    for cart_item in cart_items_db:
+        product = next((p for p in products if p["id"] == cart_item.product_id), None)
         if product:
             cart_items.append({
-                'id': product_id,
+                'id': cart_item.product_id,
                 'name': product['name'],
                 'price': product['price'],
-                'quantity': quantity
+                'quantity': cart_item.quantity
             })
-            subtotal += product['price'] * quantity
+            subtotal += product['price'] * cart_item.quantity
 
-    shipping = 50
-    tax = subtotal * 0.18
+    shipping = subtotal
+    tax = subtotal * 1
     total = subtotal + shipping + tax
 
     # Pass data to the template
@@ -601,66 +619,167 @@ def checkout():
         total=round(total, 2)
     )
 
+'''@bp.route('/place_order', methods=['POST'])
+@login_required
+def place_order():
+    user = current_user
 
-# Order placement (saving order)
+    # Fetch the product ID and quantity from the cart or form (modify based on your cart structure)
+    cart_items_db = CartItem.query.filter_by(user_id=user.id).all()
+    if not cart_items_db:
+        flash('Your cart is empty!', 'danger')
+        return redirect(url_for('views.checkout'))
+
+    # Loop through cart items to create orders for each product
+    for cart_item in cart_items_db:
+        product = next((p for p in products if p["id"] == cart_item.product_id), None)
+        if not product:
+            flash(f"Product with ID {cart_item.product_id} not found.", 'danger')
+            continue
+
+        # Calculate the total cost for the product
+        total_cost = product['price'] * cart_item.quantity
+
+        # Create a new order with all required fields
+        new_order = Order(
+            user_id=user.id,  # Set user ID
+            address_line_1=user.address_line_1,
+            state=user.state,
+            city=user.city,
+            pincode=user.pincode,
+            total_cost=total_cost,
+            status="Pending",
+            product_id=cart_item.product_id  # Add the product ID from the cart
+        )
+        db.session.add(new_order)
+
+    # Commit all orders to the database
+    db.session.commit()
+
+    # Clear the user's cart
+    CartItem.query.filter_by(user_id=user.id).delete()
+    db.session.commit()
+
+    # Flash success message
+    flash('Order(s) placed successfully and your cart has been emptied!', 'success')
+
+    # Redirect to "My Orders" page to refresh
+    return redirect(url_for('views.my_orders'))'''
+
 @bp.route('/place_order', methods=['POST'])
 @login_required
 def place_order():
-    cart = session.get('cart', {})
-    if not cart:
+    user = current_user
+
+    # Fetch the product ID and quantity from the cart
+    cart_items_db = CartItem.query.filter_by(user_id=user.id).all()
+    if not cart_items_db:
         flash('Your cart is empty!', 'danger')
-        return redirect(url_for('views.cart'))
+        return redirect(url_for('views.checkout'))
 
-    for product_id, quantity in cart.items():
-        product_id = int(product_id)
-        # Get the product from the dummy list
-        product = next((p for p in products if p["id"] == product_id), None)
-        if product:
-            # Add order (dummy order since no database)
-            order = Order(
-                user_id=current_user.id,
-                product_id=product_id,
-                product_name=product['name'],
-                category=product['category'],
-                customer_name=f"{current_user.firstname} {current_user.lastname}",
-                place=current_user.place,
-                city=current_user.city,
-                district=current_user.district,
-                state=current_user.state,
-                pincode=current_user.pincode,
-                price=product['price'] * quantity
-            )
-            db.session.add(order)
+    # Store created orders for refreshing later
+    created_orders = []
 
-    # Clear the cart and save orders
-    session['cart'] = {}
+    for cart_item in cart_items_db:
+        # Fetch the product from the dummy data using product_id from the cart
+        product = next((p for p in products if p["id"] == cart_item.product_id), None)
+        if not product:
+            flash(f"Product with ID {cart_item.product_id} not found.", 'danger')
+            continue
+
+        # Calculate total cost for the product
+        total_cost = product['price'] * cart_item.quantity
+
+        # Create a new order
+        new_order = Order(
+            user_id=user.id,
+            product_id=cart_item.product_id,  # Add the correct product_id here
+            address_line_1=user.address_line_1,
+            state=user.state,
+            city=user.city,
+            pincode=user.pincode,
+            total_cost=total_cost,
+            status="Pending"
+        )
+
+        db.session.add(new_order)
+        db.session.commit()  # Commit order immediately to get order ID
+        db.session.refresh(new_order)  # Refresh to get the latest order ID
+
+        created_orders.append(new_order)
+
+        # Create an OrderItem entry for this order
+        order_item = OrderItem(
+            order_id=new_order.id,
+            product_id=cart_item.product_id,
+            quantity=cart_item.quantity,
+            price=total_cost,
+            product_name=product['name'],
+            product_image=product['image']
+        )
+        db.session.add(order_item)
+        db.session.commit()  # Commit order item immediately
+        db.session.refresh(order_item)  # Refresh order item
+
+    # Clear the user's cart after order placement
+    CartItem.query.filter_by(user_id=user.id).delete()
     db.session.commit()
-    flash('Your order has been placed successfully!', 'success')
+
+    flash('Order(s) placed successfully and your cart has been emptied!', 'success')
 
     return redirect(url_for('views.my_orders'))
 
 
-@bp.route('/update_address', methods=['POST'])
+@bp.route('/my_orders')
 @login_required
-def update_address():
-    customer_name = f"{current_user.firstname} {current_user.lastname}",
-    place = request.form.get('place')
-    city = request.form.get('city')
-    district = request.form.get('district')
-    state = request.form.get('state')
-    pincode = request.form.get('pincode')
+def my_orders():
+    # Fetch all orders for the current user
+    orders = (
+        db.session.query(Order)
+        .filter(Order.user_id == current_user.id)
+        .all()
+    )
 
-    if all([customer_name, place, city, state, pincode]):
-        current_user.customer_name = customer_name
-        current_user.city = city
-        current_user.district = district
-        current_user.state = state
-        current_user.pincode = pincode
-        db.session.commit()
-        flash('Address updated successfully!', 'success')
-    else:
-        flash('All fields are required to update the address.', 'danger')
+    # Organizing data to group items under respective orders
+    orders_data = []
+    for order in orders:
+        # Find the product associated with this order from the dummy product data
+        product = next((p for p in products if p['id'] == order.product_id), None)
+        
+        # Fetch related OrderItem details
+        order_items = db.session.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+        
+        total_quantity = sum(item.quantity for item in order_items)
+        total_price = order.total_cost  # Ensure total_cost is stored in the Order model
 
-    return redirect(url_for('views.checkout'))
+        if product:
+            orders_data.append({
+                "order": order,
+                "product": product,
+                "total_quantity": total_quantity,
+                "total_price": total_price
+            })
+
+    return render_template('my_orders.html', orders_data=orders_data)
 
 
+
+
+
+
+
+
+@bp.route('/cancel_order/<int:order_id>', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash('You can only cancel your own orders.', 'danger')
+        return redirect(url_for('views.my_orders'))
+
+    # Update the order status to 'Cancelled'
+    order.status = 'Cancelled'
+    db.session.commit()
+
+    flash('Order has been cancelled successfully.', 'success')
+    return redirect(url_for('views.my_orders'))

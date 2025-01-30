@@ -27,10 +27,10 @@ class User(UserMixin,db.Model):
         self.pincode = pincode
         self.state = state
         self.city = city
-    
+
     def isAdmin(self):
         return self.role == 'admin' and self.id == 1 and self.email == "admin@springboard.com"
-    
+
     def isDeliveryPerson(self):
         return self.role.lower() == 'delivery' and self.approved == True
 
@@ -49,8 +49,10 @@ class Product(db.Model):
     description = db.Column(db.Text)
     details = db.Column(db.Text)
     colour = db.Column(db.String(50), nullable=False)
-    category = db.Column(db.String(100),nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    # Relationships
     cart_items = db.relationship('CartItem', back_populates='product')
+
     def __init__(self, name, price, stock_quantity, brand, size, target_user, type, image, description, details, colour, category):
         self.name = name
         self.price = price
@@ -67,40 +69,54 @@ class Product(db.Model):
 
     def __repr__(self):
         return self.name
-        
+
 
 class Order(db.Model):
-    _tablename_ = 'orders'
+    __tablename__ = 'orders'
 
+    # Primary Key
     id = db.Column(db.Integer, primary_key=True)
+    # Foreign Key from User table
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # Extracted from User table
+    address_line_1 = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    pincode = db.Column(db.String(10), nullable=False)
+    # Derived from Stats table
+    total_cost = db.Column(db.Float, nullable=False)
+    # Date and status
+    order_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    delivered_date = db.Column(db.DateTime, nullable=True)  # Set when delivery is complete
+    status = db.Column(db.String(50), nullable=False)  # Pending, Delivered, etc.
+    # Foreign key reference to Product model
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    # Relationship to Product (if you want to access product from order)
+    product = db.relationship('Product', back_populates='orders')
 
+    # Relationships
+    user = db.relationship('User', backref='orders')
+    product = db.relationship('Product', backref='orders')
 
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    customer_name = db.Column(db.String(100), nullable=False)
-    place = db.Column(db.String(100), nullable=False)
-    state = db.Column(db.String(100), nullable=False)
-    pincode = db.Column(db.Float, nullable=False)
-    district = db.Column(db.String(100), nullable=False)
-    city = db.Column(db.String(100), nullable=False)
-
-    price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-
-    #another required attributes
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable = False)
-    order_date = db.Column(db.DateTime, nullable = False, default = datetime.now(timezone.utc))
-
-    #establising the relationsip
-    user = db.relationship('User', backref = db.backref('orders', lazy = True))
-    product = db.relationship('Product', backref = db.backref('orders', lazy = True))
-
-    def __init__(self, customer_id, price, status, product_id, order_date = datetime.now(timezone.utc)):
-        self.customer_id = customer_id
+    def __init__(self, user_id, product_id, address_line_1, state, city, pincode, total_cost, status):
+        self.user_id = user_id
         self.product_id = product_id
-        self.price = price
+        self.address_line_1 = address_line_1
+        self.state = state
+        self.city = city
+        self.pincode = pincode
+        self.total_cost = total_cost
         self.status = status
-        self.order_date = order_date
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    product_id = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)  # Ensure this is present
+    product_name = db.Column(db.String(120), nullable=False)
+    product_image = db.Column(db.String(255), nullable=False)
 
 class Wishlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
