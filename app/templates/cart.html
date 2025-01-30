@@ -37,12 +37,15 @@
             <div class="card-body text-end">
                 <h3>Total Price: ₹<span id="total-price">{{ total_price }}</span></h3>
                 <p>Total Items: <span id="total-items">{{ total_items }}</span></p>
-                <a href="{{ url_for('views.home') }}" class="btn btn-secondary">Continue Shopping</a>
-                <form action="{{ url_for('views.checkout') }}" method="POST">
-                    <button type="submit" class="btn btn-success">Proceed to Checkout</button>
-                </form>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('views.home') }}" class="btn btn-warning w-48">Continue Shopping</a>
+                    <form action="{{ url_for('views.checkout') }}" method="POST" class="ms-2">
+                        <button type="submit" class="btn btn-success w-48">Proceed to Checkout</button>
+                    </form>
+                </div>
             </div>
-        </div>
+        </div>    
+        
     {% else %}
         <div class="alert alert-info text-center">Your cart is empty!</div>
     {% endif %}

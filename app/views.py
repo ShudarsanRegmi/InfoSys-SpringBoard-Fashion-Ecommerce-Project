@@ -458,7 +458,7 @@ def view_wishlist():
 
     return render_template('wishlist.html', products=products_in_wishlist)
 
-@bp.route('/wishlist')
+@bp.route('/remove-from-wishlist/<int:product_id>', methods=['POST'])
 @login_required
 def remove_from_wishlist(product_id):
     wishlist_item = Wishlist.query.filter_by(user_id=current_user.id, product_id=product_id).first()

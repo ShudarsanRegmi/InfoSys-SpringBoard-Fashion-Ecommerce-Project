@@ -14,5 +14,7 @@ Thumbs.db  # For Windows users
 .idea
 .venv/
 venv/
+migration
+
 
 app/secret.txt
