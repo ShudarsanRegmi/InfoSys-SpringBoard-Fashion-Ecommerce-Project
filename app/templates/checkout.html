@@ -10,7 +10,7 @@
     <div class="checkout-form">
         <h2>
             Delivery Address
-            <button class="edit-btn">Edit Address</button>
+            <button class="edit-btn" onclick="toggleAddressForm()">change Address</button>
         </h2>
 
         <div class="address-display" id="addressDisplay">
@@ -20,6 +20,43 @@
             {{ current_user.state}}<br>
             Pincode: {{ current_user.pincode }}<br>
             Email: {{ current_user.email }}
+        </div>
+
+        <div class="address-form" id="addressForm" style="display: none;">
+            <form id="addressUpdateForm">
+                <div class="form-group">
+                    <label for="firstname">First Name</label>
+                    <input type="text" name="firstname" value="{{ current_user.firstname }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastname">Last Name</label>
+                    <input type="text" name="lastname" value="{{ current_user.lastname }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="address_line_1">Address Line 1</label>
+                    <input type="text" name="address_line_1" value="{{ current_user.address_line_1 }}" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" name="city" value="{{ current_user.city }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <input type="text" name="state" value="{{ current_user.state }}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="pincode">Pincode</label>
+                    <input type="text" name="pincode" value="{{ current_user.pincode }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" value="{{ current_user.email }}" required>
+                </div>
+
+                <button type="button" class="submit-btn" onclick="confirmAddress()">Confirm</button>
+            </form>
         </div>
 
         <h2>Payment Method</h2>
@@ -32,12 +69,8 @@
             </p>
         </div>
 
-        <form action="{{ url_for('views.place_order') }}" method="POST">
-            <input type="hidden" name="total_cost" value="{{ total }}">
-            <button class="btn btn-success" type="submit">Place Order</button>
-        </form>
-        
-        
+        <!-- Button to Place Order (This will actually save to the database) -->
+        <button class="btn btn-success" id="placeOrderBtn" style="display: none;" onclick="placeOrder()">Place Order</button>
     </div>
 
     <div class="order-summary">
@@ -70,6 +103,7 @@
 </div>
 
 <script>
+    // Toggle between displaying the address and address form
     function toggleAddressForm() {
         const addressForm = document.getElementById('addressForm');
         const addressDisplay = document.getElementById('addressDisplay');
@@ -81,6 +115,58 @@
             addressForm.style.display = 'none';
             addressDisplay.style.display = 'block';
         }
+    }
+
+    // Update the displayed address after clicking 'Confirm'
+    function confirmAddress() {
+        const form = document.getElementById('addressUpdateForm');
+        const formData = new FormData(form);
+
+        // Extract values from the form
+        const firstname = formData.get('firstname');
+        const lastname = formData.get('lastname');
+        const address_line_1 = formData.get('address_line_1');
+        const city = formData.get('city');
+        const state = formData.get('state');
+        const pincode = formData.get('pincode');
+        const email = formData.get('email');
+
+        // Update the frontend display
+        document.getElementById('addressDisplay').innerHTML = `
+            <strong>${firstname} ${lastname}</strong><br>
+            ${address_line_1}<br>
+            ${city}<br>
+            ${state}<br>
+            Pincode: ${pincode}<br>
+            Email: ${email}
+        `;
+
+        // Hide the address form and show the "Place Order" button
+        document.getElementById('addressForm').style.display = 'none';
+        document.getElementById('addressDisplay').style.display = 'block';
+        document.getElementById('placeOrderBtn').style.display = 'block';
+    }
+
+    // Place the order after clicking "Place Order" (save to DB)
+    function placeOrder() {
+        // Send data to the backend to save the order
+        const form = document.getElementById('addressUpdateForm');
+        const formData = new FormData(form);
+
+        fetch("/place_order", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Order placed successfully!');
+                window.location.href = '/my_orders'; // Redirect to 'My Orders' page
+            } else {
+                alert('Something went wrong. Please try again.');
+            }
+        })
+        .catch(error => console.error('Error placing order:', error));
     }
 </script>
 {% endblock %}

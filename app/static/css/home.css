@@ -4,51 +4,49 @@ body {
     margin: 0;
     padding: 0;
 }
-  /* Hero Section */
-  .hero-section {
+
+/* Hero Section */
+.hero-section {
     background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-      url("https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcST7Bwozg4qDyHEd-8IgRvmyDZDwO_Bl78jTABMAmatYpoB_YyOIQXws8fK_s_Gsb8MSWaxakeASr9Fq52d_nhjmRqSCvOdiA9np5gSut6sgs8Y7arp2mTHvw")
+        url("https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcST7Bwozg4qDyHEd-8IgRvmyDZDwO_Bl78jTABMAmatYpoB_YyOIQXws8fK_s_Gsb8MSWaxakeASr9Fq52d_nhjmRqSCvOdiA9np5gSut6sgs8Y7arp2mTHvw")
         center/cover;
     height: 300px;
     color: #fff;
-  }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
 
-  /* Product Cards */
-  .product-card {
+/* Product Cards */
+.product-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
+    border-radius: 8px;
+    overflow: hidden;
+}
 
-  .product-card:hover {
+.product-card:hover {
     transform: scale(1.05);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  }
+}
 
-  .product-card img {
-    object-fit: cover;
+/* Ensuring images fit within product cards */
+.product-card img {
+    width: 100%;
     height: 250px;
-  }
+    object-fit: cover;
+    border-radius: 8px 8px 0 0;
+}
 
 /* Product Image Styling */
 .product-image {
-    -webkit-text-size-adjust: 100%;
-    font-size: 14px;
-    line-height: 20px;
-    font-family: "Amazon Ember", Arial, sans-serif;
-    border-collapse: collapse;
-    word-wrap: break-word;
-    list-style: none;
-    visibility: visible !important;
-    color: var(--__N4QdCheV6mGo, #0f1111);
-    box-sizing: border-box;
-    border: 0;
-    vertical-align: top;
-    height: 100% !important;
-    width: auto !important;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
     max-width: 446.521px;
     max-height: 581px;
+    border-radius: 8px;
 }
-
-
 
 /* Ensure the body and HTML are full height */
 html, body {
@@ -74,9 +72,8 @@ html, body {
     padding: 10px 0;
     text-align: center;
     width: 100%;
-    position: bottom;
+    position: relative;
     bottom: 0;
     left: 0;
     margin-top: auto;
 }
-

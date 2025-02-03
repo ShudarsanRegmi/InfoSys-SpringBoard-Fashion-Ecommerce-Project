@@ -581,8 +581,6 @@ def remove_from_cart(product_id):
         flash("Item removed from cart!", "success")
     return redirect(url_for('views.cart'))
 
-
-
 @bp.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
@@ -619,96 +617,54 @@ def checkout():
         total=round(total, 2)
     )
 
-'''@bp.route('/place_order', methods=['POST'])
-@login_required
-def place_order():
-    user = current_user
-
-    # Fetch the product ID and quantity from the cart or form (modify based on your cart structure)
-    cart_items_db = CartItem.query.filter_by(user_id=user.id).all()
-    if not cart_items_db:
-        flash('Your cart is empty!', 'danger')
-        return redirect(url_for('views.checkout'))
-
-    # Loop through cart items to create orders for each product
-    for cart_item in cart_items_db:
-        product = next((p for p in products if p["id"] == cart_item.product_id), None)
-        if not product:
-            flash(f"Product with ID {cart_item.product_id} not found.", 'danger')
-            continue
-
-        # Calculate the total cost for the product
-        total_cost = product['price'] * cart_item.quantity
-
-        # Create a new order with all required fields
-        new_order = Order(
-            user_id=user.id,  # Set user ID
-            address_line_1=user.address_line_1,
-            state=user.state,
-            city=user.city,
-            pincode=user.pincode,
-            total_cost=total_cost,
-            status="Pending",
-            product_id=cart_item.product_id  # Add the product ID from the cart
-        )
-        db.session.add(new_order)
-
-    # Commit all orders to the database
-    db.session.commit()
-
-    # Clear the user's cart
-    CartItem.query.filter_by(user_id=user.id).delete()
-    db.session.commit()
-
-    # Flash success message
-    flash('Order(s) placed successfully and your cart has been emptied!', 'success')
-
-    # Redirect to "My Orders" page to refresh
-    return redirect(url_for('views.my_orders'))'''
 
 @bp.route('/place_order', methods=['POST'])
 @login_required
 def place_order():
     user = current_user
+    # Extract address information from the form
+    address_line_1 = request.form.get('address_line_1')
+    state = request.form.get('state')
+    city = request.form.get('city')
+    pincode = request.form.get('pincode')
+    firstname = request.form.get('firstname')
+    lastname = request.form.get('lastname')
+    email = request.form.get('email')
 
-    # Fetch the product ID and quantity from the cart
+    # Fetch cart items
     cart_items_db = CartItem.query.filter_by(user_id=user.id).all()
     if not cart_items_db:
         flash('Your cart is empty!', 'danger')
-        return redirect(url_for('views.checkout'))
+        return redirect(url_for('views.cart'))
 
-    # Store created orders for refreshing later
     created_orders = []
 
     for cart_item in cart_items_db:
-        # Fetch the product from the dummy data using product_id from the cart
         product = next((p for p in products if p["id"] == cart_item.product_id), None)
         if not product:
             flash(f"Product with ID {cart_item.product_id} not found.", 'danger')
             continue
 
-        # Calculate total cost for the product
         total_cost = product['price'] * cart_item.quantity
 
         # Create a new order
         new_order = Order(
             user_id=user.id,
-            product_id=cart_item.product_id,  # Add the correct product_id here
-            address_line_1=user.address_line_1,
-            state=user.state,
-            city=user.city,
-            pincode=user.pincode,
+            product_id=cart_item.product_id,
+            address_line_1=address_line_1,
+            state=state,
+            city=city,
+            pincode=pincode,
             total_cost=total_cost,
             status="Pending"
         )
 
         db.session.add(new_order)
-        db.session.commit()  # Commit order immediately to get order ID
-        db.session.refresh(new_order)  # Refresh to get the latest order ID
+        db.session.commit()
 
         created_orders.append(new_order)
 
-        # Create an OrderItem entry for this order
+        # Add order item details
         order_item = OrderItem(
             order_id=new_order.id,
             product_id=cart_item.product_id,
@@ -718,16 +674,17 @@ def place_order():
             product_image=product['image']
         )
         db.session.add(order_item)
-        db.session.commit()  # Commit order item immediately
-        db.session.refresh(order_item)  # Refresh order item
+        db.session.commit()
 
-    # Clear the user's cart after order placement
+    # Clear the user's cart after placing the order
     CartItem.query.filter_by(user_id=user.id).delete()
     db.session.commit()
 
-    flash('Order(s) placed successfully and your cart has been emptied!', 'success')
+    flash('Order placed successfully!', 'success')
 
-    return redirect(url_for('views.my_orders'))
+    return jsonify({"success": True})
+
+
 
 
 @bp.route('/my_orders')
@@ -745,10 +702,10 @@ def my_orders():
     for order in orders:
         # Find the product associated with this order from the dummy product data
         product = next((p for p in products if p['id'] == order.product_id), None)
-        
+
         # Fetch related OrderItem details
         order_items = db.session.query(OrderItem).filter(OrderItem.order_id == order.id).all()
-        
+
         total_quantity = sum(item.quantity for item in order_items)
         total_price = order.total_cost  # Ensure total_cost is stored in the Order model
 
@@ -761,9 +718,6 @@ def my_orders():
             })
 
     return render_template('my_orders.html', orders_data=orders_data)
-
-
-
 
 
 
