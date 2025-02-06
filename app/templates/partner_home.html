@@ -192,7 +192,7 @@
                   <!-- Form to update the order status if it's not delivered successfully -->
                   <form action="{{ url_for('views.update_status', order_id=order.id) }}" method="POST">
                     <select name="status" class="form-control">
-                      <option value="In Transit" {% if order.status == "Pending" %}selected{% endif %}>In Transit</option>
+                      <option value="Pending" {% if order.status == "Pending" %}selected{% endif %}>In Transit</option>
                       <option value="Delivered" {% if order.status == "Delivered" %}selected{% endif %}>Delivered Successfully</option>
                       <option value="Cancelled" {% if order.status == "Cancelled" %}selected{% endif %}>Failed</option>
                     </select>
