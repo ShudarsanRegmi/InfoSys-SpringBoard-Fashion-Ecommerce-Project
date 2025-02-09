@@ -313,7 +313,7 @@ def dashboard():
 @bp.route('/update_status/<int:order_id>', methods=['POST'])
 @is_delivery_person
 def update_status(order_id):
-    order = Order.query.get(order_id)
+    order = Order.query.filter_by(id = order_id).first()
 
     if order:
         new_status = request.form['status']

@@ -28,7 +28,6 @@ visualize = Visualize()
 @login_required
 @is_admin
 def index():
-    print("Going to render admin page")
     return render_template('admin.html')
 
 
@@ -109,8 +108,10 @@ def new_product():
 @is_admin
 def update_product(id):
     # Fetch the product from the database by its ID
-    product = Product.query.get_or_404(id)
-
+    product = db.session.get(Product, id)
+    if product is None:
+        return "Product not found", 404
+        
     if request.method == 'POST':
         try:
             # Extract form fields
@@ -190,7 +191,9 @@ def product_list():
 @is_admin
 def delete_product(id):
     # Fetch the product from the database by its ID
-    product = Product.query.get_or_404(id)
+    product = db.session.get(Product, id)
+    if product is None:
+        return "Product not found", 404
 
     try:
         # Delete the product

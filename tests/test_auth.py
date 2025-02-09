@@ -3,7 +3,6 @@ from flask_testing import TestCase
 from main import create_app, db, models
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
-from flask import Flask, session, get_flashed_messages
 from app.models import User
 
 class TestSignupPage(TestCase):
@@ -158,7 +157,7 @@ class TestLogin(TestCase):
             'password': 'password'
         }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Welcome', response.data)
+        self.assertIn(b'StyleVerse - Home', response.data)
 
     def test_empty_email_and_password(self):
         """Test submitting empty email and password."""
