@@ -29,16 +29,7 @@ def load_user(user_id):
 
 def create_app(config_class="Config"):
     """Create and configure the Flask application."""
-    app = Flask(__name__)
-
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Gmail SMTP server
-    app.config['MAIL_PORT'] = 587  # Port number for sending email
-    app.config['MAIL_USE_TLS'] = True  # Use TLS encryption
-    app.config['MAIL_USE_SSL'] = False  # Don't use SSL (if using TLS)
-    app.config['MAIL_USERNAME'] = 'shudarsanregmi555@gmail.com'  # Your Gmail address
-    app.config['MAIL_PASSWORD'] = 'fxfb thor ixpf vzue'  # Your Gmail password (or app password if 2FA is enabled)
-    app.config['MAIL_DEFAULT_SENDER'] = 'shudarsanregmi555@gmail.com'
-    
+    app = Flask(__name__)    
     # Load the configuration from config.py
     app.config.from_object(f"config.{config_class}")
 
