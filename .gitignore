@@ -16,3 +16,4 @@ Thumbs.db  # For Windows users
 venv/
 
 app/secret.txt
+instance/database.db
