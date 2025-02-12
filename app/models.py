@@ -190,3 +190,23 @@ class CartItem(db.Model):
 
     user = db.relationship('User', back_populates='cart_items')
     product = db.relationship('Product', back_populates='cart_items')
+
+class ProductRatings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    rate = db.Column(db.Float)
+    description = db.Column(db.String(250), nullable=True)
+
+
+    user = db.relationship('User')
+    product = db.relationship('Product')
+
+    def __init__(self, user_id, product_id, rating, desc):
+        self.user_id=user_id
+        self.product_id=product_id
+        self.rate = rating
+        self.description = desc

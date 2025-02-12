@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, get_flashed_messages, redirect, url_for, Response, flash, request, session, jsonify
 from flask_login import login_required, current_user
-from .models import db, Wishlist,Order,CartItem,OrderItems
+from .models import db, Wishlist,Order,CartItem,OrderItems, ProductRatings
 from .forms import UpdateUserForm
 from .decorators import is_delivery_person, is_admin
 from .constants import STATES_CITY, PRODUCTS
@@ -38,7 +38,9 @@ def product_details(product_id):
         return "Product not found", 404
     similar_products = [_ for _ in PRODUCTS if ((_.category == product.category or _.type == product.type or _.target_user == product.target_user) and _.id != product.id) ]
     
-    return render_template('product.html', product=product, similar_products=similar_products)
+    ratings = ProductRatings.query.filter_by(product_id=product_id).all()
+
+    return render_template('product.html', product=product, similar_products=similar_products, ratings = ratings)
 
 
 @bp.route('/update', methods=['GET', 'POST'])
@@ -339,48 +341,6 @@ def update_status(order_id):
 
 
 
-
-
-# @bp.route('/rate_product/<int:order_id>', methods=['GET', 'POST'])
-# @login_required
-# def rate_product(order_id):
-#     # Fetch the order using the order_id
-#     order = Order.query.get_or_404(order_id)
-
-#     # Fetch the product associated with the order
-#     product = Product.query.get_or_404(order.product_id)
-
-#     if request.method == 'POST':
-#         try:
-#             # Get the user's rating from the form (rating is expected to be between 1 and 5)
-#             rating = request.form['rating']  # Assumes the form will send a 'rating' field as 1, 2, 3, 4, or 5
-#             customer_rating = int(rating)  # Convert rating to integer
-
-#             # Check if the product has already been rated
-#             if product.rating == 'not rated':
-#                 # If not rated yet, store the customer's rating
-#                 product.rating = str(customer_rating)
-#             else:
-#                 # If rated, calculate the new average rating
-#                 current_rating = float(product.rating)
-#                 new_rating = (current_rating + customer_rating) / 2
-#                 product.rating = str(new_rating)
-
-#             # Commit the changes to the database
-#             db.session.commit()
-
-#             # Flash success message and redirect to the product page or a thank-you page
-#             flash(f"Thank you for rating! Your rating of {customer_rating} has been saved.", "success")
-#             return redirect(url_for('auth.login'))
-
-#         except Exception as e:
-#             db.session.rollback()
-#             print(f"Error occurred while rating the product: {e}")
-#             flash("An error occurred while submitting your rating. Please try again later.", "danger")
-#             return redirect(url_for('views.view_product', id=product.id))
-
-#     return render_template('rate_product.html', product=product,order=order)
-
 @bp.route('/rate_product/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def rate_product(product_id):
@@ -390,10 +350,21 @@ def rate_product(product_id):
     # Fetch the product associated with the order
     product = Product.query.get_or_404(product_id)
     
+    order = OrderItems.query.filter(OrderItems.UserID == current_user.id, OrderItems.ProductID == product_id).first()
+
+    if not order:
+        return redirect(url_for('views.product_details', product_id=product_id))
+        
     if request.method == 'POST':
+
         try:
-            # Get the user's rating from the form (rating is expected to be between 1 and 5)
+            # Get the user's rating from the form (  is expected to be between 1 and 5)
             rating = request.form['rating']  # Assumes the form will send a 'rating' field as 1, 2, 3, 4, or 5
+            description = request.form['description']
+
+            Ratings = ProductRatings(current_user.id, product_id, float(rating), description)
+            db.session.add(Ratings)
+
             customer_rating = int(rating)  # Convert rating to integer
 
             # Check if the product has already been rated
@@ -402,7 +373,6 @@ def rate_product(product_id):
                 product.rating = str(customer_rating)
             else:
                 # If rated, calculate the new average rating
-                print("Product rating = " + product.rating)
                 current_rating = float(product.rating)
                 new_rating = (current_rating + customer_rating) / 2
                 product.rating = str(new_rating)
@@ -410,15 +380,11 @@ def rate_product(product_id):
             # Commit the changes to the database
             db.session.commit()
 
-            # Flash success message and redirect to the product page or a thank-you page
-            flash(f"Thank you for rating! Your rating of {customer_rating} has been saved.", "success")
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('views.home'))
 
         except Exception as e:
             db.session.rollback()
             print(f"Error occurred while rating the product: {e}")
-            flash("An error occurred while submitting your rating. Please try again later.", "danger")
-            # return redirect(url_for('views.view_product', id=product.id))
 
     return render_template('rate_product.html', product=product)
 

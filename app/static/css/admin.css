@@ -33,9 +33,3 @@
   flex-direction: column;
   justify-content: center;
 }
-
-img {
-  max-width: 150px;
-  height: auto;
-  border-radius: 50%;
-}

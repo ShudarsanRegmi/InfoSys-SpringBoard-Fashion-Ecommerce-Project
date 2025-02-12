@@ -19,6 +19,11 @@
             <h1 class="mb-3">{{ product.name }}</h1>
             <h3 class="text-primary mb-3">₹{{ product.price }}</h3>
             <p class="text-muted mb-4">{{ product.description }}</p>
+            {% if product.rating %}
+              <p class="text-warning mb-2">{{ product.rating }}&#9733; / 5</p>
+            {% else %}
+              <p class="text-primary mb-2">No Ratings Yet</p>
+            {% endif %}
 
             <form action="{{ url_for('views.add_to_cart', product_id=product.id) }}" method="post" class="d-inline-block">
               {% if product.stock_quantity > 0 %}
@@ -65,5 +70,43 @@
         </div>
       </div>
     </section>
+
+    <!-- Product Ratings Section -->
+    {% if ratings %}
+    <section>
+      <h1 class="text-center mb-4">Product Ratings</h1>
+      
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <ul class="list-group">
+          {% for rating in ratings %}
+          <li class="list-group-item mb-3 shadow-sm rounded">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="mb-1">Rated by: {{ rating.user.firstname }} {{ rating.user.lastname }}</h5>
+                <small class="text-muted">{{ rating.date.strftime('%B %d, %Y') }}</small>
+              </div>
+              <div>
+                <!-- Displaying stars -->
+                <span class="text-warning fs-4">
+                  {% for i in range(1, 6) %}
+                  {% if i <= rating.rate %}
+                  &#9733;
+                  {% else %}
+                  <span class="text-secondary">&#9733;</span>
+                  {% endif %}
+                  {% endfor %}
+                </span>
+              </div>
+            </div>
+            <p class="mt-2">{{ rating.description }}</p>
+            <p class="text-muted mb-0"><em>Product: {{ rating.product.name }}</em></p>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 </div>
 {% endblock %}
